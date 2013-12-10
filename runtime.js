@@ -1,5 +1,4 @@
-(function(e){if("function"==typeof bootstrap)bootstrap("jade",e);else if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else if("undefined"!=typeof ses){if(!ses.ok())return;ses.makeJade=e}else"undefined"!=typeof window?window.jade=e():global.jade=e()})(function(){var define,ses,bootstrap,module,exports;
-return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.jade=e():"undefined"!=typeof global?global.jade=e():"undefined"!=typeof self&&(self.jade=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 /*!
  * Jade - runtime
@@ -32,6 +31,34 @@ if (!Object.keys) {
     return arr;
   }
 }
+
+var nativeMap = Array.prototype.map;
+// map implementations for browsers that
+// do not have Array.prototype.map
+function map(arr, iterator, context) {
+  var results = [];
+  if (nativeMap && arr.map === nativeMap)
+    return arr.map(iterator, context);
+  for (var i = 0, length = arr.length; i < length; i++) {
+    results.push(iterator.call(context, arr[i], i, arr));
+  }
+  return results;
+}
+
+var nativeFilter = Array.prototype.filter;
+// filter implementations for browsers that
+// do not have Array.prototype.filter
+function filter(arr, iterator, context) {
+  var results = [];
+  if (nativeFilter && arr.filter === nativeFilter)
+    return arr.filter(iterator, context);
+
+  for (var i = 0, length = arr.length; i < length; i++) {
+    if(iterator.call(context, arr[i], i, arr)) results.push(arr[i]);
+  }
+  return results;
+}
+
 
 /**
  * Merge two attribute objects giving precedence
@@ -87,7 +114,7 @@ function nulls(val) {
  */
 
 function joinClasses(val) {
-  return Array.isArray(val) ? val.map(joinClasses).filter(nulls).join(' ') : val;
+  return Array.isArray(val) ? filter(map(val, joinClasses), nulls).join(' ') : val;
 }
 
 /**
@@ -119,8 +146,8 @@ exports.attrs = function attrs(obj, escaped){
             ? buf.push(key)
             : buf.push(key + '="' + key + '"');
         }
-      } else if (0 == key.indexOf('data') && 'string' != typeof val) {
-        buf.push(key + "='" + JSON.stringify(val) + "'");
+      } else if (/^data/.test(key) && 'string' != typeof val) {
+        buf.push(key + "='" + JSON.stringify(val).replace(/'/g, '&apos;') + "'");
       } else if ('class' == key) {
         if (escaped && escaped[key]){
           if (val = exports.escape(joinClasses(val))) {
@@ -185,7 +212,7 @@ exports.rethrow = function rethrow(err, filename, lineno, str){
     , end = Math.min(lines.length, lineno + context);
 
   // Error context
-  var context = lines.slice(start, end).map(function(line, i){
+  var context = map(lines.slice(start, end), function(line, i){
     var curr = i + start + 1;
     return (curr == lineno ? '  > ' : '    ')
       + curr
@@ -201,8 +228,8 @@ exports.rethrow = function rethrow(err, filename, lineno, str){
 };
 
 },{"fs":2}],2:[function(require,module,exports){
-// nothing to see here... no file methods for the browser
 
-},{}]},{},[1])(1)
+},{}]},{},[1])
+(1)
 });
 ;
